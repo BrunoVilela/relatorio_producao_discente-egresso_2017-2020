@@ -1,0 +1,235 @@
+---
+title: "Relatório de publicacão dos discentes e egressos do PPG Ecologia: Teoria, Aplicacão
+  e Valores da UFBA - quadriênio 2017-2020"
+author: "Prof. Dr. Bruno Vilela"
+date: "2022-09-21"
+output: 
+  pdf_document: 
+    number_sections: yes
+    toc: yes
+    fig_caption: yes
+    extra_dependencies: ["float"]
+toc-title: "Índice"
+editor_options: 
+  chunk_output_type: console
+---
+\renewcommand{\topfraction}{.9}
+\renewcommand{\bottomfraction}{.9}
+\renewcommand{\textfraction}{.1}
+\renewcommand{\floatpagefraction}{.9}
+\setcounter{topnumber}{3}
+\setcounter{bottomnumber}{3}
+\setcounter{totalnumber}{4}
+\renewcommand{\figurename}{Figura}
+\renewcommand{\tablename}{Tabela}
+
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE,
+                      cache = TRUE,
+                      warning = FALSE)
+```
+
+# Sobre
+
+Nesse arquivo, monitoramos os dados de publicações de discentes e egressos no quadirênio e calculamos as métricas 2.1 e 2.2 da ficha de avaliação 2017-2020 para a área de biodiversidade.
+
+# Preparacão
+
+## Dados e scripts
+Os dados e scripts disponibilizados aqui podem ser encontrados no seguinte link do github: 
+Para replicar as análises clone o repositório do github e rode os códigos a seguir.
+
+## Pacotes necessários
+
+Instale e carregue os seguintes pacotes para replicar a análise.
+Note que o pacote `NUPEX` foi desenvolvido no Instituto de Biologia UFBA para acompanhamento anual da producão de discentes e docentes e está disponível para download no github, conforme instrucões abaixo. 
+```{r pacotes}
+library(tidyverse)
+library(stringi)
+library(magrittr)
+library(scholar)
+library(here)
+# Para baixar o pacote NUPEX:
+# devtools::install_github("BrunoVilela/NUPEX")
+library(NUPEX) 
+```
+
+## Funcões auxiliares
+
+Para deixar esse relatório mais curto, funcões auxiliares foram criadas em um outro script, carregue elas no R usando o código abaixo.
+```{r funcões auxiliares}
+source(here("Scripts", "funcoes_auxiliares.R"))
+```
+
+## Informacões do lattes
+
+Primeiramente, extraimos os dados dos arquivos XML de cada discente e egresso.
+```{r lattes, message=FALSE, warning=FALSE}
+# lattes
+ano_base = 2017:2020
+path = here("Dados/lattes")
+
+# Get the lattes
+lattes_alunos <- get_lattes_folder(path, progress = FALSE)
+```
+
+## Qualis
+O qualis de todas as revistas onde discentes e egressos publicaram seus artigos foram classificadas segundo as regras estabelecidas no documento de área. Ainda assim algumas revistas não puderam ser classificadas (símbolo `NA` nas análises).
+```{r qualis, message = FALSE}
+qualis <- read_csv(here("Dados/qualis", "qualis_revistas_publicadas.csv"))
+qualis_estrato <- c("A1", "A2", "A3", "A4", "B1", "B2", "B3", "B4", "C")
+```
+
+### Combinar artigos com o qualis
+A seguir combinamos os artigos com o qualis das revistas.
+```{r papers}
+papers <- lattes_alunos$papers %>% 
+  mutate(TITULO = gsub( "\\s*\\([^\\)]+\\)", "",`TITULO-DO-PERIODICO-OU-REVISTA`),
+         TITULO = trimws(toupper(TITULO))) %>% 
+  mutate(ANO = `ANO-DO-ARTIGO`) %>%
+  filter(ANO < 2021) %>% 
+  select(NOME, `TITULO-DO-ARTIGO`, TITULO, ISSN, ANO, DOI) %>% 
+  left_join(y = qualis, by = c("ISSN", "TITULO")) %>% 
+  distinct() 
+```
+
+## Discentes e egressos do curso
+
+Aqui carregamos os dados dos egressos do programa e padronizamos os nomes para as análises.
+```{r egressos}
+egressos <- read.csv(here("Dados/alunos-egressos", "egressos.csv"))
+egressos$Egresso <- toupper(stri_trans_general(str = egressos$Egresso, 
+                                               id = "Latin-ASCII"))
+```
+
+Aqui carregamos os dados dos discentes do programa e padronizamos os nomes para as análises.
+```{r}
+matriculados <- read.csv(here("Dados/alunos-egressos",
+                              "matriculados_2017-2020.csv"),
+                         encoding = "latin1")
+matriculados$Matriculado.em <- gsub("\\..", "", matriculados$Matriculado.em)
+matriculados$Nome <- toupper(stri_trans_general(str = matriculados$Nome, 
+                                                id = "Latin-ASCII"))
+```
+
+Aqui padronizamos os nomes dos lattes para as análises. 
+```{r}
+lattes_nomes <- toupper(stri_trans_general(str = lattes_alunos$basic$`NOME-COMPLETO`, 
+                                                               id = "Latin-ASCII"))
+## Ajustes específicos para o lattes
+### Nome social
+murilo <- "MURILLO MEDEIROS CARVALHO"
+egressos$Egresso[egressos$Egresso  == "MIRELLA MEDEIROS CARVALHO"] <- murilo
+matriculados$Nome[matriculados$Nome  == "MIRELLA MEDEIROS CARVALHO"] <- murilo 
+
+### Hífen 
+egressos$Egresso[egressos$Egresso  == "YUSLENI FIERRO TOSCANO"] <- "YUSLENI FIERRO-TOSCANO"
+```
+
+# Análises dos itens 2.1 e 2.2
+
+## Artigos B3-A1 e A4-A1 por mestre equivalente
+Seguindo as instrucões da ficha da área. Foram calculados a seguir:
+- O número de artigos completos B3 ou superior publicados por titulado mestre-equivalente;    
+- A qualidade da producão intelectual de discentes e egressos, aferida por artigos A4 ou superior publicados por titulado mestre-equivalente.
+```{r}
+# Número de anos base
+n_base <- length(ano_base)
+
+#  Vetores e matrizes vazias para guardar o resultados
+pub_A4 <- numeric(n_base)
+pub_B3 <- numeric(n_base)
+qualificado_keep <- matrix(nrow = n_base, ncol = 10)
+
+# Análise para cada ano base
+for (i in 1:n_base) {
+  # Egressos do ano
+  egs <- egressos$Ano.de.Referência. > (ano_base[i] - 5) &
+    egressos$Ano.de.Referência. < (ano_base[i])
+  egs_tab <- egressos[egs, ]
+  # Discentes do ano
+  matris <- matriculados$Nome[matriculados$Matriculado.em == ano_base[i]]
+  # Alunos completos
+  alunos <- c(egs_tab$Egresso, matris)
+  alunos <- alunos[!duplicated(alunos)]
+  nomes_lattes <- lattes_alunos$basic$`NOME-COMPLETO`[match_names(alunos, lattes_nomes)]
+  # Artigos do ano e dos Discentes e egressos do ano
+  ano_paper <- papers$ANO == ano_base[i]
+  papers_i <- (papers$NOME %in% nomes_lattes) & ano_paper
+  papers_ls <- papers[papers_i, ]
+  
+  # Calcula producão A1-B3 e A1-A4
+  qualificado <- table(factor(papers_ls$ESTRATO, 
+                              levels = qualis_estrato),
+                  useNA = "ifany")
+  qualificado_keep[i, ] <- qualificado
+  ## Número total de mestre equivalente
+  docs_egressos <- 2.5 * sum(egs_tab$Nível == "Doutorado")
+  outros_alunos <-
+    length(unique(c(matris,
+                    egs_tab$Egresso[egs_tab$Nível != "Doutorado"])))
+  mest_equiv <- docs_egressos + outros_alunos
+  ## Producão
+  A4 <- sum(qualificado[1:4])
+  B3 <- sum(qualificado[1:7])
+  
+  pub_A4[i] <- A4 / mest_equiv
+  pub_B3[i] <- B3 / mest_equiv  
+}
+```
+
+### Resultado Publicacão A1-B3
+
+O número de artigos completos B3 ou superior publicados por titulado mestre-equivalente no quadriênio foi de:
+```{r B3}
+sum(pub_B3)
+```
+*Note que a maneira de sumarizar esse resultado não está descrito no documento de área, sendo impossível replicar exatamente a análise. Por lógica, pressupõe-se uma soma.*
+ 
+### Resultado Publicacão A1-A4
+
+A qualidade da producão intelectual de discentes e egressos, aferida por artigos A4 ou superior publicados por titulado mestre-equivalente foi de:
+```{r A4}
+sum(pub_A4)
+```
+*Note que a maneira de sumarizar esse resultado não está descrito no documento de área, sendo impossível replicar exatamente a análise. Por lógica, pressupõe-se uma soma.*
+
+### Distribuicão de publicacões ao longo do quadriênio
+
+A publicacão de discentes e egressos referentes a cada ano por estrato pode ser verificada abaixo:
+```{r distribuicao_papers}
+colnames(qualificado_keep) <- c(qualis_estrato, "Não encontrado")
+qualificado_keep %>% 
+  as_tibble() %>% 
+  add_column(ANO = 2017:2020) %>% 
+  pivot_longer(!ANO) %>% 
+  ggplot(aes(x = name, y = value, group = ANO, fill = ANO)) +
+  geom_col(position = "dodge") + 
+  ylab("Estrato") +
+  xlab("Número de publicacões") 
+```
+
+## Porcentagem de discentes e egressos com A4-A1
+A porcentagem de discentes e egressos com publicacão A4+ foi calculada da seguinte maneira.
+```{r porcentagem}
+NA1.A4 <- papers %>% 
+  group_by(NOME, ESTRATO) %>% 
+  summarise(n = n()) %>% 
+  filter(ESTRATO %in% qualis_estrato[1:4]) %>% 
+  pull(NOME) %>% 
+  unique() %>% 
+  length()
+Ntotal <- length(lattes_nomes)
+porcA1.A4 <- NA1.A4 / Ntotal
+```
+
+### Resultado 
+O resultado final obtido foi:
+```{r porcentagem_resultado}
+porcA1.A4
+```
+
+
+
