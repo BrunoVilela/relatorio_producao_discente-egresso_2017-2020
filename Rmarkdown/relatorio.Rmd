@@ -1,17 +1,17 @@
 ---
-title: "Relatório de publicacão dos discentes e egressos do PPG Ecologia: Teoria,
+title: "Relatório de publicação dos discentes e egressos do PPG Ecologia: Teoria,
   Aplicacão e Valores da UFBA - quadriênio 2017-2020"
 author: "Prof. Dr. Bruno Vilela"
-date: "2022-09-21"
+date: "21-09-2022"
 output:
-  html_document:
-    toc: yes
-    df_print: paged
   pdf_document:
     number_sections: yes
     toc: yes
     fig_caption: yes
     extra_dependencies: float
+  html_document:
+    toc: yes
+    df_print: paged
 toc-title: Índice
 editor_options:
   chunk_output_type: console
@@ -42,12 +42,14 @@ Nesse arquivo, monitoramos os dados de publicações de discentes e egressos no 
 
 ## Dados e scripts
 Os dados e scripts disponibilizados aqui podem ser encontrados no seguinte link do github: https://github.com/BrunoVilela/relatorio_producao_discente-egresso_2017-2020/tree/main
+
+
 Para replicar as análises clone o repositório do github e rode os códigos a seguir.
 
 ## Pacotes necessários
 
 Instale e carregue os seguintes pacotes para replicar a análise.
-Note que o pacote `NUPEX` foi desenvolvido no Instituto de Biologia UFBA para acompanhamento anual da producão de discentes e docentes e está disponível para download no github, conforme instrucões abaixo. 
+Note que o pacote `NUPEX` foi desenvolvido no Instituto de Biologia UFBA para acompanhamento anual da produção de discentes e docentes e está disponível para download no github, conforme instruções abaixo. 
 ```{r pacotes}
 library(tidyverse)
 library(stringi)
@@ -59,10 +61,10 @@ library(here)
 library(NUPEX) 
 ```
 
-## Funcões auxiliares
+## funções auxiliares
 
-Para deixar esse relatório mais curto, funcões auxiliares foram criadas em um outro script, carregue elas no R usando o código abaixo.
-```{r funcões auxiliares}
+Para deixar esse relatório mais curto, funções auxiliares foram criadas em um outro script, carregue elas no R usando o código abaixo.
+```{r funções auxiliares}
 source(here("Scripts", "funcoes_auxiliares.R"))
 ```
 
@@ -134,9 +136,9 @@ egressos$Egresso[egressos$Egresso  == "YUSLENI FIERRO TOSCANO"] <- "YUSLENI FIER
 # Análises dos itens 2.1 e 2.2
 
 ## Artigos B3-A1 e A4-A1 por mestre equivalente
-Seguindo as instrucões da ficha da área. Foram calculados a seguir:
+Seguindo as instruções da ficha da área. Foram calculados a seguir:
 - O número de artigos completos B3 ou superior publicados por titulado mestre-equivalente;    
-- A qualidade da producão intelectual de discentes e egressos, aferida por artigos A4 ou superior publicados por titulado mestre-equivalente.
+- A qualidade da produção intelectual de discentes e egressos, aferida por artigos A4 ou superior publicados por titulado mestre-equivalente.
 ```{r}
 # Número de anos base
 n_base <- length(ano_base)
@@ -163,7 +165,7 @@ for (i in 1:n_base) {
   papers_i <- (papers$NOME %in% nomes_lattes) & ano_paper
   papers_ls <- papers[papers_i, ]
   
-  # Calcula producão A1-B3 e A1-A4
+  # Calcula produção A1-B3 e A1-A4
   qualificado <- table(factor(papers_ls$ESTRATO, 
                               levels = qualis_estrato),
                   useNA = "ifany")
@@ -174,7 +176,7 @@ for (i in 1:n_base) {
     length(unique(c(matris,
                     egs_tab$Egresso[egs_tab$Nível != "Doutorado"])))
   mest_equiv <- docs_egressos + outros_alunos
-  ## Producão
+  ## produção
   A4 <- sum(qualificado[1:4])
   B3 <- sum(qualificado[1:7])
   
@@ -183,7 +185,7 @@ for (i in 1:n_base) {
 }
 ```
 
-### Resultado Publicacão A1-B3
+### Resultado publicação A1-B3
 
 O número de artigos completos B3 ou superior publicados por titulado mestre-equivalente no quadriênio foi de:
 ```{r B3}
@@ -191,18 +193,18 @@ sum(pub_B3)
 ```
 *Note que a maneira de sumarizar esse resultado não está descrito no documento de área, sendo impossível replicar exatamente a análise. Por lógica, pressupõe-se uma soma.*
  
-### Resultado Publicacão A1-A4
+### Resultado publicação A1-A4
 
-A qualidade da producão intelectual de discentes e egressos, aferida por artigos A4 ou superior publicados por titulado mestre-equivalente foi de:
+A qualidade da produção intelectual de discentes e egressos, aferida por artigos A4 ou superior publicados por titulado mestre-equivalente foi de:
 ```{r A4}
 sum(pub_A4)
 ```
 *Note que a maneira de sumarizar esse resultado não está descrito no documento de área, sendo impossível replicar exatamente a análise. Por lógica, pressupõe-se uma soma.*
 
-### Distribuicão de publicacões ao longo do quadriênio
+### Distribuicão de publicações ao longo do quadriênio
 
-A publicacão de discentes e egressos referentes a cada ano por estrato pode ser verificada abaixo:
-```{r distribuicao_papers}
+A publicação de discentes e egressos referentes a cada ano por estrato pode ser verificada abaixo:
+```{r distribuicao_papers, fig.cap="Figura1. Número de publicações por estrato qualis de Discentes e Egressos do PPG-ECOTAV no quadriênio 2017-2020."}
 colnames(qualificado_keep) <- c(qualis_estrato, "Não encontrado")
 qualificado_keep %>% 
   as_tibble() %>% 
@@ -211,11 +213,11 @@ qualificado_keep %>%
   ggplot(aes(x = name, y = value, group = ANO, fill = ANO)) +
   geom_col(position = "dodge") + 
   xlab("Estrato") +
-  ylab("Número de publicacões") 
+  ylab("Número de publicações") 
 ```
 
 ## Porcentagem de discentes e egressos com A4-A1
-A porcentagem de discentes e egressos com publicacão A4+ foi calculada da seguinte maneira.
+A porcentagem de discentes e egressos com publicação A4+ foi calculada da seguinte maneira.
 ```{r porcentagem}
 NA1.A4 <- papers %>% 
   group_by(NOME, ESTRATO) %>% 
@@ -229,7 +231,7 @@ porcA1.A4 <- NA1.A4 / Ntotal
 ```
 
 ### Resultado 
-O resultado indicou que a porcentagem de discentes e egressos com publicacão A4+ foi:
+O resultado indicou que a porcentagem de discentes e egressos com publicação A4+ foi:
 ```{r porcentagem_resultado}
 porcA1.A4
 ```
