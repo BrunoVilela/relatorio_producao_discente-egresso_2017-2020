@@ -1,16 +1,19 @@
 ---
-title: "Relatório de publicacão dos discentes e egressos do PPG Ecologia: Teoria, Aplicacão
-  e Valores da UFBA - quadriênio 2017-2020"
+title: "Relatório de publicacão dos discentes e egressos do PPG Ecologia: Teoria,
+  Aplicacão e Valores da UFBA - quadriênio 2017-2020"
 author: "Prof. Dr. Bruno Vilela"
 date: "2022-09-21"
-output: 
-  pdf_document: 
+output:
+  html_document:
+    toc: yes
+    df_print: paged
+  pdf_document:
     number_sections: yes
     toc: yes
     fig_caption: yes
-    extra_dependencies: ["float"]
-toc-title: "Índice"
-editor_options: 
+    extra_dependencies: float
+toc-title: Índice
+editor_options:
   chunk_output_type: console
 ---
 \renewcommand{\topfraction}{.9}
@@ -38,7 +41,7 @@ Nesse arquivo, monitoramos os dados de publicações de discentes e egressos no 
 # Preparacão
 
 ## Dados e scripts
-Os dados e scripts disponibilizados aqui podem ser encontrados no seguinte link do github: 
+Os dados e scripts disponibilizados aqui podem ser encontrados no seguinte link do github: https://github.com/BrunoVilela/relatorio_producao_discente-egresso_2017-2020/tree/main
 Para replicar as análises clone o repositório do github e rode os códigos a seguir.
 
 ## Pacotes necessários
@@ -207,8 +210,8 @@ qualificado_keep %>%
   pivot_longer(!ANO) %>% 
   ggplot(aes(x = name, y = value, group = ANO, fill = ANO)) +
   geom_col(position = "dodge") + 
-  ylab("Estrato") +
-  xlab("Número de publicacões") 
+  xlab("Estrato") +
+  ylab("Número de publicacões") 
 ```
 
 ## Porcentagem de discentes e egressos com A4-A1
@@ -226,7 +229,7 @@ porcA1.A4 <- NA1.A4 / Ntotal
 ```
 
 ### Resultado 
-O resultado final obtido foi:
+O resultado indicou que a porcentagem de discentes e egressos com publicacão A4+ foi:
 ```{r porcentagem_resultado}
 porcA1.A4
 ```
